@@ -1,13 +1,13 @@
 # GuijiOS Weekly Review
 
-自动生成每周复盘周报的 Claude Skill，从 Cowork 和 Claude Code 双端对话记录中提取本周所有工作内容，输出两份报告：
+自动生成每周复盘周报的 Claude Skill，从 Claude Desktop（Cowork + Code tab）和 Claude Code 终端 CLI 的全部对话记录中提取本周所有工作内容，输出两份报告：
 
 - **对内周报**：给自己看的全面复盘，含成果清单、时间分配、关键决策、下周计划和反思
 - **对外周报**：面向公开读者的精选周记，自动隐去敏感信息
 
 ## 特性
 
-- **全量数据采集**：覆盖 Cowork（Claude Desktop 桌面端）全部会话（含归档）和 Claude Code（终端 CLI）全部对话，自动去重 Cowork 派生的子进程
+- **全量数据采集**：覆盖 Claude Desktop Cowork tab 全部会话（含归档）和 Claude Code（Desktop Code tab + 终端 CLI）全部对话，自动去重 Cowork 派生的子进程
 - **数据驱动分类**：不预设工作类别，首次运行时从实际对话内容自动聚类，用户确认后持久化；后续运行自动检测新类别
 - **敏感信息过滤**：可配置的过滤规则，确保对外周报不泄露财务、人事、运营数据等隐私信息
 - **自动验证**：用 subagent 交叉检查事实一致性和信息泄露

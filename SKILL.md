@@ -1,7 +1,7 @@
 ---
 name: guijios-weekly-review
 description: >
-  自动生成每周复盘周报（对内复盘 + 对外公开周记），从 Cowork（Claude Desktop 桌面端）和 Claude Code（终端 CLI）双端对话记录中提取本周所有工作内容。
+  自动生成每周复盘周报（对内复盘 + 对外公开周记），从 Claude Desktop（Cowork + Code tab）和 Claude Code 终端 CLI 的全部对话记录中提取本周所有工作内容。
   当用户提到以下场景时必须使用此 skill：写周报、生成周报、本周总结、每周复盘、weekly review、week recap、
   summarize this week、周记、对外周记、对内周报、本周做了什么、回顾本周。
   即使用户只是说"帮我写周报"、"总结一下这周"或"what did I do this week"，也应自动触发。
@@ -38,10 +38,12 @@ description: >
 
 用户与 Claude 的交互分为两个独立产品，数据存储在不同位置：
 
-| 产品 | 说明 | 数据位置 | 对话格式 |
-|------|------|----------|----------|
-| **Cowork**（Claude Desktop 桌面端） | 可视化对话界面，可挂载文件夹、使用 MCP 工具 | `~/Library/Application Support/Claude/local-agent-mode-sessions/<org>/<user>/` | `audit.jsonl` |
-| **Claude Code**（终端 CLI 工具） | 命令行开发工具，在项目目录中运行 | `~/.claude/projects/` | `<session-id>.jsonl` |
+Claude Desktop 有三个 tab：Chat（纯对话，无本地记录）、**Cowork**（Agent 模式）、**Code**（Claude Code 的 GUI 版）。本 skill 采集后两者的数据。
+
+| 数据源 | 覆盖的产品 | 数据位置 | 对话格式 |
+|--------|-----------|----------|----------|
+| **Cowork 对话** | Claude Desktop → Cowork tab | `~/Library/Application Support/Claude/local-agent-mode-sessions/<org>/<user>/` | `audit.jsonl` |
+| **Claude Code 对话** | Claude Desktop → Code tab **+** 终端 CLI（同一引擎，数据存同一位置） | `~/.claude/projects/` | `<session-id>.jsonl` |
 
 > **重要：去重**。每个 Cowork 会话都会派生一个 Claude Code 子进程（元数据中的 `cliSessionId` 字段）。大部分派生子进程的对话存储在 Cowork 会话自己的内部目录中（`local_<session-id>/.claude/projects/`），不会出现在全局 `~/.claude/projects/`，无需处理。但**少量会话**会在全局 `~/.claude/projects/` 中产生记录（通常在 `-sessions-` 前缀的项目目录下）。采集 Claude Code 数据时需要排除这些，避免同一段工作被计算两次。去重方法见 1B 步骤 2。
 
@@ -70,7 +72,7 @@ description: >
 
 > **补充数据源**：也可调用 `list_sessions` API（limit: 50）获取当前活跃的 Cowork 会话，通过 `read_transcript` 快速预览。但注意 API 只能看到约 30% 的会话，`audit.jsonl` 才是完整数据。
 
-### 1B. Claude Code 终端对话记录
+### 1B. Claude Code 对话记录（终端 CLI + Desktop Code tab）
 
 请求挂载目录 `~/.claude`。
 
