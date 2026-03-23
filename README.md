@@ -14,12 +14,20 @@
 
 ## 安装
 
-下载 `GuijiOS-weekly-review.skill` 文件，双击安装到 Claude Desktop。
+### 方式一：Skills CLI（推荐）
 
-或者将 `GuijiOS-weekly-review/` 文件夹复制到你的 skills 目录：
+使用 [Vercel Labs Skills CLI](https://github.com/vercel-labs/skills) 一键安装：
 
 ```bash
-cp -r GuijiOS-weekly-review/ ~/.claude/skills/GuijiOS-weekly-review/
+npx skills add JackChen-me/GuijiOS-weekly-review
+```
+
+### 方式二：手动安装
+
+将仓库克隆到你的 skills 目录：
+
+```bash
+git clone https://github.com/JackChen-me/GuijiOS-weekly-review.git ~/.claude/skills/GuijiOS-weekly-review
 ```
 
 ## 使用
