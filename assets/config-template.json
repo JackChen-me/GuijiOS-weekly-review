@@ -1,0 +1,41 @@
+{
+  "identity": {
+    "label": "独立开发者",
+    "intro_blockquote": "一句话介绍自己，用于对外周报开头。"
+  },
+  "categories": [],
+  "external_report": {
+    "title_pattern": "周记 #{{number}}｜{{date_range}}",
+    "topic_count": "3-5",
+    "style_notes": "说人话，不讲道理只说事实，有具体细节和数字。每个主题末尾提炼一个加粗的可复用观点。",
+    "closing_section": "下周干什么",
+    "target_audience": "同行或感兴趣的读者"
+  },
+  "sensitive_filters": [
+    {
+      "category": "财务信息",
+      "description": "具体投资标的、金额、收益、收入数字",
+      "examples": ["买了XX股票", "本月收入XX万"]
+    },
+    {
+      "category": "人事信息",
+      "description": "候选人姓名、面试评价、薪资",
+      "examples": ["面试了张三", "给XX开了30K"]
+    },
+    {
+      "category": "运营数据",
+      "description": "具体粉丝数、转化率、DAU 等精确数据",
+      "examples": ["公众号5000粉", "转化率3.2%"]
+    },
+    {
+      "category": "安全与隐私",
+      "description": "服务器配置、密钥、内部系统地址、VPN 方案",
+      "examples": ["服务器IP", "API key", "VPN配置"]
+    }
+  ],
+  "file_naming": {
+    "internal": "周报_对内_{{start_date}}-{{end_date}}.md",
+    "external": "周报_对外_{{start_date}}-{{end_date}}.md",
+    "date_format": "YYYYMMDD"
+  }
+}
