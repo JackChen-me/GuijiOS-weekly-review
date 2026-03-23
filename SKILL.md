@@ -43,7 +43,7 @@ description: >
 | **Cowork**（Claude Desktop 桌面端） | 可视化对话界面，可挂载文件夹、使用 MCP 工具 | `~/Library/Application Support/Claude/local-agent-mode-sessions/<org>/<user>/` | `audit.jsonl` |
 | **Claude Code**（终端 CLI 工具） | 命令行开发工具，在项目目录中运行 | `~/.claude/projects/` | `<session-id>.jsonl` |
 
-> **重要**：Cowork 会话在底层会派生 Claude Code 子进程，这些子进程的对话也会出现在 `~/.claude/projects/` 中。采集时需要**去重**，避免同一段工作被计算两次。去重方法：Cowork 元数据（`.json`）中的 `cliSessionId` 字段对应 `~/.claude/projects/` 中的 `.jsonl` 文件名，匹配到的就是 Cowork 派生的，应从 Claude Code 数据中排除。
+> **重要：去重**。每个 Cowork 会话都会派生一个 Claude Code 子进程（元数据中的 `cliSessionId` 字段）。大部分派生子进程的对话存储在 Cowork 会话自己的内部目录中（`local_<session-id>/.claude/projects/`），不会出现在全局 `~/.claude/projects/`，无需处理。但**少量会话**会在全局 `~/.claude/projects/` 中产生记录（通常在 `-sessions-` 前缀的项目目录下）。采集 Claude Code 数据时需要排除这些，避免同一段工作被计算两次。去重方法见 1B 步骤 2。
 
 ### 1A. Cowork 对话记录（主数据源）
 
@@ -63,10 +63,10 @@ description: >
 执行步骤：
 1. 列出该目录下所有 `local_*/audit.jsonl`
 2. 读取同级的 `.json` 元数据文件，使用其中的 `lastActivityAt` 字段（毫秒时间戳）判断是否属于本周（往前推 7 天）。如果该字段缺失，回退到 `stat` 获取文件修改时间
-3. 从元数据中提取 title、cwd、cliSessionId（`cliSessionId` 是 Cowork 派生的 Claude Code 子进程的会话 ID，并非所有会话都有此字段）
+3. 从元数据中提取 title、cwd、cliSessionId（每个 Cowork 会话都有此字段，指向其派生的 Claude Code 子进程会话 ID）
 4. 用 Python 脚本提取每个会话的：用户消息摘要（前 150 字符）、消息总行数、核心主题
 5. 对于内容丰富的会话（>100 行），可用 subagent 并行读取
-6. **记录所有非空的 `cliSessionId`**，用于下一步去重（没有 `cliSessionId` 的会话是纯 Cowork 会话，未派生 Claude Code 子进程）
+6. **收集所有 `cliSessionId`**，用于下一步去重
 
 > **补充数据源**：也可调用 `list_sessions` API（limit: 50）获取当前活跃的 Cowork 会话，通过 `read_transcript` 快速预览。但注意 API 只能看到约 30% 的会话，`audit.jsonl` 才是完整数据。
 
@@ -84,7 +84,9 @@ description: >
 
 执行步骤：
 1. 用 `find` 和 `stat` 找出本周修改过的所有 `.jsonl` 文件（排除 `subagents/` 子目录）
-2. **去重**：将每个 `.jsonl` 的文件名（即 sessionId）与 1A 中收集的 `cliSessionId` 集合比对。匹配到的是 Cowork 派生的子进程，**跳过**（已在 1A 中采集）
+2. **去重（两层过滤）**：
+   - **按目录名过滤**：跳过 `-sessions-` 前缀的项目目录（如 `-sessions-jolly-hopeful-shannon`），这些是 Cowork 派生的子进程工作目录
+   - **按 sessionId 过滤**：将每个 `.jsonl` 的文件名（即 sessionId）与 1A 中收集的 `cliSessionId` 集合比对，匹配到的**跳过**
 3. 对剩余的纯终端 Claude Code 对话，提取首条用户消息了解主题
 4. 按项目目录名分组汇总
 
