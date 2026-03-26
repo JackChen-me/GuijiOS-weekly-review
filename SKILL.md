@@ -30,9 +30,25 @@ description: >
 
 ---
 
-## 第一步：收集本周所有对话数据
+## 第一步：确定时间范围并收集对话数据
 
-从两个数据源采集本周的完整工作记录。核心原则是：**不遗漏、不重复**。
+### 时间范围规则
+
+时间范围贯穿整个流程（数据采集、周报内容、文件命名），必须先确定再开始采集。
+
+| 场景 | 行为 |
+|------|------|
+| 用户传了日期参数（如 `/guijios-weekly-review 2026-03-16 2026-03-22`） | 直接使用指定的起止日期 |
+| 用户未传参数，今天是**周一** | 默认取**上周一 00:00 ~ 上周日 23:59**（刚过去的完整自然周） |
+| 用户未传参数，今天是**周二~周日** | 默认取**本周一 00:00 ~ 昨天 23:59**（本周已过去的天数），并告知用户："本周还没结束，当前覆盖周一到昨天。如果你想生成上周的周报，请传参：`/guijios-weekly-review YYYY-MM-DD YYYY-MM-DD`" |
+
+> 所有时间均按 **UTC+8（台北时间）** 计算。
+
+将确定的时间范围记为 `range_start` 和 `range_end`，后续所有步骤统一引用。
+
+---
+
+从两个数据源采集时间范围内的完整工作记录。核心原则是：**不遗漏、不重复**。
 
 ### 数据架构说明
 
@@ -64,7 +80,7 @@ Claude Desktop 有三个 tab：Chat（纯对话，无本地记录）、**Cowork*
 
 执行步骤：
 1. 列出该目录下所有 `local_*/audit.jsonl`
-2. 读取同级的 `.json` 元数据文件，使用其中的 `lastActivityAt` 字段（毫秒时间戳）判断是否属于本周（往前推 7 天）。如果该字段缺失，回退到 `stat` 获取文件修改时间
+2. 读取同级的 `.json` 元数据文件，使用其中的 `lastActivityAt` 字段（毫秒时间戳，转为 UTC+8）判断是否落在 `range_start` ~ `range_end` 范围内。如果该字段缺失，回退到 `stat` 获取文件修改时间
 3. 从元数据中提取 title、cwd、cliSessionId（每个 Cowork 会话都有此字段，指向其派生的 Claude Code 子进程会话 ID）
 4. 用 Python 脚本提取每个会话的：用户消息摘要（前 150 字符）、消息总行数、核心主题
 5. 对于内容丰富的会话（>100 行），可用 subagent 并行读取
@@ -85,7 +101,7 @@ Claude Desktop 有三个 tab：Chat（纯对话，无本地记录）、**Cowork*
 ```
 
 执行步骤：
-1. 用 `find` 和 `stat` 找出本周修改过的所有 `.jsonl` 文件（排除 `subagents/` 子目录）
+1. 用 `find` 和 `stat` 找出 `range_start` ~ `range_end` 范围内修改过的所有 `.jsonl` 文件（排除 `subagents/` 子目录）
 2. **去重（两层过滤）**：
    - **按目录名过滤**：跳过 `-sessions-` 前缀的项目目录（如 `-sessions-jolly-hopeful-shannon`），这些是 Cowork 派生的子进程工作目录
    - **按 sessionId 过滤**：将每个 `.jsonl` 的文件名（即 sessionId）与 1A 中收集的 `cliSessionId` 集合比对，匹配到的**跳过**
@@ -200,7 +216,7 @@ Claude Desktop 有三个 tab：Chat（纯对话，无本地记录）、**Cowork*
 - `周报_对内_YYYYMMDD-YYYYMMDD.md`
 - `周报_对外_YYYYMMDD-YYYYMMDD.md`
 
-日期范围为本周一到本周日。
+日期范围使用 `range_start` 和 `range_end`（第一步确定的时间范围）。
 
 ---
 
